@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Reminders</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="reminders">Reminders</string>
+    <string name="location_reminders">Location Reminders</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="title">Title</string>
+    <string name="description">Description</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="ignore_until">Ignore until:</string>
+    <string name="search">Search</string>
+</resources>
