@@ -39,7 +39,6 @@ import java.util.ArrayList;
 
 public class MainActivity extends FragmentActivity implements ReminderService.RemindersListener, UserService.UserInfoListener {
     private DBService dbService = DBService.getInstance();
-    private RabbitMQManager rabbitMQManager = RabbitMQManager.getInstance();
     private ReminderManager reminderManager = ReminderManager.getInstance();
     private SharedPreferencesManager sharedPreferencesManager = SharedPreferencesManager.getInstance();
     private boolean undeletedReminderCleanupComplete;
@@ -107,7 +106,10 @@ public class MainActivity extends FragmentActivity implements ReminderService.Re
 
         undeletedReminderCleanupComplete = false;
         String deviceID = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
-        rabbitMQManager.connectToQueue(deviceID);
+        Intent rabbitMQService = new Intent(getBaseContext(), RabbitMQManager.class);
+        rabbitMQService.putExtra("device_id", deviceID);
+        startService(rabbitMQService);
+
         String[] LOCATION_PERMS = {
                 Manifest.permission.ACCESS_FINE_LOCATION
         };

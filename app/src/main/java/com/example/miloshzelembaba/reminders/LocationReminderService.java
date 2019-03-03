@@ -1,5 +1,6 @@
 package com.example.miloshzelembaba.reminders;
 
+
 import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -7,8 +8,12 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.app.TaskStackBuilder;
-import android.content.Intent;
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleObserver;
+import android.arch.lifecycle.OnLifecycleEvent;
+import android.arch.lifecycle.ProcessLifecycleOwner;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
@@ -31,13 +36,8 @@ import com.example.miloshzelembaba.reminders.Utils.LocationUtil;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
 
-import static android.app.NotificationManager.IMPORTANCE_LOW;
-import static android.app.NotificationManager.IMPORTANCE_MAX;
 import static android.app.NotificationManager.IMPORTANCE_MIN;
-import static android.app.NotificationManager.IMPORTANCE_NONE;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -45,9 +45,10 @@ import static android.app.NotificationManager.IMPORTANCE_NONE;
  * <p>
  * helper methods.
  */
-public class LocationReminderService extends Service implements ReminderService.RemindersListener {
+public class LocationReminderService extends Service implements ReminderService.RemindersListener, LifecycleObserver {
     CurrentLocationManager currentLocationManager = CurrentLocationManager.getInstance();
     ArrayList<Reminder> currentReminders = new ArrayList<>();
+    private boolean background = false;
 
     public LocationReminderService() {
         super();
@@ -67,7 +68,6 @@ public class LocationReminderService extends Service implements ReminderService.
                 mainHandler.post(runnable);
             }
 
-            Log.i("~~~~~~", "~~~~~~ lat=" + location.getLatitude() + "   lon="+location.getLongitude());
             checkIfUserInReminder(new LatLng(location.getLatitude(), location.getLongitude()));
         }
     };
@@ -130,6 +130,7 @@ public class LocationReminderService extends Service implements ReminderService.
     @Override
     public void onReminderRefresh(ArrayList<Reminder> reminders, boolean error) {
         currentReminders = reminders;
+        SharedPreferencesManager.getInstance().saveReminders(this, reminders);
         checkIfUserInReminder(currentLocationManager.getCurrentLocation());
     }
 
@@ -146,9 +147,13 @@ public class LocationReminderService extends Service implements ReminderService.
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.w("MyIntentService", "onStartCommand callback called");
+        background = intent.getBooleanExtra("background", false);
         startService();
-
         return START_STICKY;
+    }
+
+    public void setBackground(boolean b) {
+        background = b;
     }
 
     @Override
@@ -160,15 +165,27 @@ public class LocationReminderService extends Service implements ReminderService.
     private void startService() {
         Log.i("~~~~~~", "~~~~~~ starting service");
         startForeground(1338, buildForegroundNotification());
+        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
 
         DBService.getInstance().addReminderListener(this);
-//        ArrayList<Reminder> tmp = SharedPreferencesManager.getInstance().getReminders(this);
-//        if (tmp != null) {
-//            currentReminders = tmp;
-//            Log.i("~~~~~~", "~~~~~~ reminder size = " + currentReminders.size());
-//        }
+        ArrayList<Reminder> tmp = SharedPreferencesManager.getInstance().getReminders(this);
+        if (tmp != null) {
+            currentReminders = tmp;
+            Log.i("~~~~~~", "~~~~~~ reminder size = " + currentReminders.size());
+        }
+
         MyLocation myLocation = new MyLocation();
         myLocation.getLocation(getBaseContext(), locationResult);
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+    private void onAppBackgrounded() {
+        //App in background
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_START)
+    private void onAppForegrounded() {
+        background = false;
     }
 
     private void checkIfUserInReminder(LatLng location) {
@@ -181,30 +198,32 @@ public class LocationReminderService extends Service implements ReminderService.
                     double dist = LocationUtil.getDistanceFromLatLonInMeters(reminderLocation, location);
                     if (dist < reminder.getRadius()) {
                         ApplicationUtil.sendNotification(this, reminder);
-                        // todo: this should eventually get updated to be offline i think... Will crash when just the service is running and we need to delte a reminder
-                        DBService.getInstance().deleteReminder(reminder);
+                        DBService.getInstance().deleteReminder(reminder, !background);
                         remindersToDelete.add(r);
                     }
                 }
             }
             currentReminders.removeAll(remindersToDelete);
+            SharedPreferencesManager.getInstance().saveReminders(this, currentReminders);
         }
     }
 
     private Notification buildForegroundNotification() {
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        String CHANNEL_ID = "my_channel_01";
+        String CHANNEL_ID = "location_reminder_channel";
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            CharSequence name = "my_channel";
-            String Description = "This is my channel";
-            int importance = NotificationManager.IMPORTANCE_HIGH;
+            CharSequence name = "Location Reminder";
+            String Description = "Location Reminder Channel";
+            int importance = NotificationManager.IMPORTANCE_MIN;
             NotificationChannel mChannel = new NotificationChannel(CHANNEL_ID, name, importance);
             mChannel.setDescription(Description);
-            mChannel.enableLights(true);
+            mChannel.enableLights(false);
             mChannel.setLightColor(Color.RED);
-            mChannel.enableVibration(true);
-            mChannel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
+            mChannel.enableVibration(false);
+            mChannel.setImportance(IMPORTANCE_MIN);
+            mChannel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
+            mChannel.setSound(null, null);
             mChannel.setShowBadge(false);
             notificationManager.createNotificationChannel(mChannel);
         }
@@ -227,9 +246,9 @@ public class LocationReminderService extends Service implements ReminderService.
     @Override
     public void onDestroy() {
         Log.w("MyIntentService", "onDestroy callback called");
-//        Intent broadcastIntent = new Intent(this, LocationServiceReceiver.class);
-//
-//        sendBroadcast(broadcastIntent);
+        Intent broadcastIntent = new Intent(this, LocationServiceReceiver.class);
+
+        sendBroadcast(broadcastIntent);
         super.onDestroy();
     }
 

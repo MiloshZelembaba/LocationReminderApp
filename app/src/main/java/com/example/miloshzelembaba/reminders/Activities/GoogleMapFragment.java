@@ -134,11 +134,13 @@ public class GoogleMapFragment extends Fragment implements OnMapReadyCallback, C
     }
 
     private void focusOnLocation(LatLng location) {
-        CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(location)
-                .zoom(17)                   // Sets the zoom
-                .build();                   // Creates a CameraPosition from the builder
-        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+        if (googleMap != null) {
+            CameraPosition cameraPosition = new CameraPosition.Builder()
+                    .target(location)
+                    .zoom(17)                   // Sets the zoom
+                    .build();                   // Creates a CameraPosition from the builder
+            googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+        }
     }
 
     @Override
@@ -161,6 +163,9 @@ public class GoogleMapFragment extends Fragment implements OnMapReadyCallback, C
                 openReminderView(latLng);
             }
         });
+        if (CurrentLocationManager.getInstance().getCurrentLocation() != null) {
+            focusOnLocation(CurrentLocationManager.getInstance().getCurrentLocation());
+        }
         drawReminders(reminderManager.getReminders());
     }
 
