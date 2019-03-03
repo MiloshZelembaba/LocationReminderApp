@@ -8,6 +8,8 @@ public class LocationServiceReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        context.startService(new Intent(context, LocationReminderService.class));
+        Intent i = new Intent(context, LocationReminderService.class);
+        i.putExtra("background", true);
+        context.startService(i);
     }
 }

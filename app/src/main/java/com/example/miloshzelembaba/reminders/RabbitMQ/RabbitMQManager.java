@@ -1,9 +1,10 @@
 package com.example.miloshzelembaba.reminders.RabbitMQ;
 
+import android.app.Service;
+import android.content.Intent;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.example.miloshzelembaba.reminders.RabbitMQ.ServerObjects.ServerObject;
@@ -27,9 +28,8 @@ import java.util.HashMap;
 
 // todo: maybe this should be a service instead.
 
-public class RabbitMQManager {
+public class RabbitMQManager extends Service {
     private ConnectionFactory factory = new ConnectionFactory();
-    private static RabbitMQManager instance;
     private static AMQP.Queue.DeclareOk queue;
 
     private HashMap<String, BaseService> eventToCallbackMap = new HashMap<>();
@@ -38,28 +38,35 @@ public class RabbitMQManager {
     private final String PLACE_AUTOCOMPLETE = "place_auto_complete";
     private final String UPDATE_HOME_ADDRESS_EVENT = "update_home_address_event";
 
-    @Nullable
-    public static RabbitMQManager getInstance() {
-        if (instance == null) {
-            try {
-                instance = new RabbitMQManager();
-            } catch (Exception e) {
-                return null;
-            }
+    @Override
+    public IBinder onBind(Intent intent) {
+        // This won't be a bound service, so simply return null
+        return null;
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        try {
+            connectToQueue(intent.getStringExtra("device_id"));
+            setupConnectionFactory();
+            eventToCallbackMap.put(REMINDER_SERVICE_EVENT, ReminderService.getInstance());
+            eventToCallbackMap.put(USER_SERVICE_EVENT, UserService.getInstance());
+            eventToCallbackMap.put(PLACE_AUTOCOMPLETE, PlaceAutocompleteService.getInstance());
+            eventToCallbackMap.put(UPDATE_HOME_ADDRESS_EVENT, UpdateHomeAddressService.getInstance());
+        } catch (Exception e) {
+            Log.e("RabbitMQ", "Couldn't start rabbitMQ service");
         }
-        return instance;
+        return START_STICKY;
+    }
+
+    @Override
+    public void onStart(Intent intent, int startId) {
+        Log.w("MyIntentService", "onStart callback called");
+        super.onStart(intent, startId);
     }
 
     public boolean isQ() {
         return queue != null;
-    }
-
-    private RabbitMQManager() throws Exception{
-        setupConnectionFactory();
-        eventToCallbackMap.put(REMINDER_SERVICE_EVENT, ReminderService.getInstance());
-        eventToCallbackMap.put(USER_SERVICE_EVENT, UserService.getInstance());
-        eventToCallbackMap.put(PLACE_AUTOCOMPLETE, PlaceAutocompleteService.getInstance());
-        eventToCallbackMap.put(UPDATE_HOME_ADDRESS_EVENT, UpdateHomeAddressService.getInstance());
     }
 
     private void setupConnectionFactory() throws Exception{

@@ -70,6 +70,17 @@ public class DBService {
         thread.start();
     }
 
+    public void deleteReminder(Reminder remidner, boolean doCallback) {
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                reminderService.deleteReminder(remidner, doCallback);
+            }
+        };
+        Thread thread = new Thread(runnable);
+        thread.start();
+    }
+
     public void updateReminder(Reminder remidner) {
         Runnable runnable = new Runnable() {
             @Override

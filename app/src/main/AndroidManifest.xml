@@ -41,6 +41,10 @@
             android:name=".LocationReminderService"
             android:enabled="true" />
 
+        <service
+            android:name=".RabbitMQ.RabbitMQManager"
+            android:enabled="true" />
+
         <receiver
             android:name=".LocationServiceReceiver"
             android:enabled="true"
