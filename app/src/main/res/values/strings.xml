@@ -11,4 +11,6 @@
     <string name="delete">Delete</string>
     <string name="ignore_until">Ignore until:</string>
     <string name="search">Search</string>
+    <string name="loading">Loading…</string>
+    <string name="no_reminders">No reminders</string>
 </resources>

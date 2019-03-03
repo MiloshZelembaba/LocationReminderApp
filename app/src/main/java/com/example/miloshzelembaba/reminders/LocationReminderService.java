@@ -96,9 +96,9 @@ public class LocationReminderService extends Service implements ReminderService.
 
             try {
                 if (gps_enabled)
-                    lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 10, locationListenerGps);
+                    lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 7, locationListenerGps);
                 if (network_enabled)
-                    lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 10, locationListenerNetwork);
+                    lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 7, locationListenerNetwork);
             } catch (SecurityException e) {
                 // todo: need to handle this by prompting the user
                 Log.e("location", "proper permissions not granted");
@@ -147,7 +147,9 @@ public class LocationReminderService extends Service implements ReminderService.
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.w("MyIntentService", "onStartCommand callback called");
-        background = intent.getBooleanExtra("background", false);
+        if (intent != null) {
+            background = intent.getBooleanExtra("background", false);
+        }
         startService();
         return START_STICKY;
     }

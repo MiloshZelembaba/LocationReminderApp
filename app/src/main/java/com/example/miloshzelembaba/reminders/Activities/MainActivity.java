@@ -41,7 +41,6 @@ public class MainActivity extends FragmentActivity implements ReminderService.Re
     private DBService dbService = DBService.getInstance();
     private ReminderManager reminderManager = ReminderManager.getInstance();
     private SharedPreferencesManager sharedPreferencesManager = SharedPreferencesManager.getInstance();
-    private boolean undeletedReminderCleanupComplete;
     GoogleMapFragment mapFragment = new GoogleMapFragment();
     ReminderFragment reminderFragment = new ReminderFragment();
     Intent locationServiceIntent;
@@ -104,7 +103,6 @@ public class MainActivity extends FragmentActivity implements ReminderService.Re
             Toast.makeText(this, "Please check your network connection", Toast.LENGTH_SHORT).show();
         }
 
-        undeletedReminderCleanupComplete = false;
         String deviceID = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
         Intent rabbitMQService = new Intent(getBaseContext(), RabbitMQManager.class);
         rabbitMQService.putExtra("device_id", deviceID);

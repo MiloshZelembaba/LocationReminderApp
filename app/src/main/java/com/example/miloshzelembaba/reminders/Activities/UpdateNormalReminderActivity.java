@@ -3,12 +3,17 @@ package com.example.miloshzelembaba.reminders.Activities;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.DatePicker;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
@@ -22,6 +27,7 @@ import java.util.Date;
 public class UpdateNormalReminderActivity extends BaseUpdateReminderActivity {
     protected TextView date;
     protected TextView time;
+    private ImageView timeIcon;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +38,7 @@ public class UpdateNormalReminderActivity extends BaseUpdateReminderActivity {
 
         date = findViewById(R.id.date);
         time = findViewById(R.id.time);
+        timeIcon = findViewById(R.id.time_icon);
 
         if (reminder != null) {
             date.setText(DateFormat.getDateInstance().format(new Date(reminder.getTimestamp())));
@@ -50,6 +57,10 @@ public class UpdateNormalReminderActivity extends BaseUpdateReminderActivity {
             time.setText(DateFormat.getTimeInstance(DateFormat.SHORT).format(calendar.getTime()));
             setupDateAndTimePickerClicker();
         }
+
+        Drawable timeIconDrawable = getResources().getDrawable(R.mipmap.baseline_access_time_white_24dp);
+        timeIconDrawable.setColorFilter(Color.LTGRAY, PorterDuff.Mode.MULTIPLY);
+        timeIcon.setImageDrawable(timeIconDrawable);
     }
 
     private void setupDateAndTimePickerClicker() {

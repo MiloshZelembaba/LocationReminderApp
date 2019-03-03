@@ -7,6 +7,16 @@
         android:id="@+id/list_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:visibility="gone"
+        android:divider="@color/white"
         android:scrollbars="none"/>
+
+    <TextView
+        android:id="@+id/descriptive_text"
+        android:text="@string/loading"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:gravity="center"/>
 
 </LinearLayout>

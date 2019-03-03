@@ -4,6 +4,9 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.support.v4.view.PagerAdapter;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -12,6 +15,7 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.DatePicker;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -44,11 +48,12 @@ public class UpdateLocationReminderActivity extends BaseUpdateReminderActivity i
     protected TextView date;
     protected TextView time;
     protected RelativeLayout datetimePickerContainer;
+    protected ImageView radiusIcon;
 
     protected Long datetime;
     protected LocationReminder locationReminder;
     protected GoogleMap googleMap;
-    private final int MIN_RADIUS = 40;
+    private final int MIN_RADIUS = 10;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +69,7 @@ public class UpdateLocationReminderActivity extends BaseUpdateReminderActivity i
         datetimeCheckbox = findViewById(R.id.datetime_checkbox);
         date = findViewById(R.id.location_date);
         time = findViewById(R.id.location_time);
+        radiusIcon = findViewById(R.id.radius_icon);
         datetimePickerContainer = findViewById(R.id.date_time_picker_container);
         datetimePickerContainer.setVisibility(View.GONE); // the datetime feature is currenctly broken and it's not MVP
 
@@ -118,6 +124,9 @@ public class UpdateLocationReminderActivity extends BaseUpdateReminderActivity i
         radiusSlider.setProgress((int)radius - MIN_RADIUS);
         radiusSlider.setOnSeekBarChangeListener(seekListener);
         setupDateAndTimePickerClicker();
+        Drawable radiusIconDrawable = getResources().getDrawable(R.mipmap.radius_icon);
+        radiusIconDrawable.setColorFilter(Color.LTGRAY, PorterDuff.Mode.MULTIPLY);
+        radiusIcon.setImageDrawable(radiusIconDrawable);
     }
 
     private void setNewDateTime() {
@@ -185,7 +194,9 @@ public class UpdateLocationReminderActivity extends BaseUpdateReminderActivity i
         CircleOptions circleOptions = new CircleOptions().fillColor(Color.argb(97, 93, 0, 139)).strokeColor(Color.argb(200, 93, 0, 139));
         CircleOptions userLocation = new CircleOptions().fillColor(Color.argb(97, 93, 185, 139)).strokeColor(Color.argb(200, 93, 185, 139));
         googleMap.addCircle(circleOptions.center(latlng).radius(radius));
-        googleMap.addCircle(userLocation.center(CurrentLocationManager.getInstance().getCurrentLocation()).radius(5)); // yes i know this location won't really update
+        if (CurrentLocationManager.getInstance().getCurrentLocation() != null) {
+            googleMap.addCircle(userLocation.center(CurrentLocationManager.getInstance().getCurrentLocation()).radius(5)); // yes i know this location won't really update
+        }
     }
 
     @Override
