@@ -2,6 +2,7 @@ package com.example.miloshzelembaba.reminders.Activities;
 
 import android.Manifest;
 import android.app.ActivityManager;
+import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
@@ -44,6 +45,7 @@ public class MainActivity extends FragmentActivity implements ReminderService.Re
     GoogleMapFragment mapFragment = new GoogleMapFragment();
     ReminderFragment reminderFragment = new ReminderFragment();
     Intent locationServiceIntent;
+    Intent rabbitMQService;
 
     private ViewPagerAdapter pagerAdapter = new ViewPagerAdapter(getSupportFragmentManager());
 
@@ -94,6 +96,15 @@ public class MainActivity extends FragmentActivity implements ReminderService.Re
         });
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (ApplicationUtil.getUser() != null) {
+            dbService.getReminders();
+            dbService.updateFCMToken();
+        }
+    }
+
     // used to start up important tasks/services and setsup the inital config
     private void initTasks() {
         ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -104,7 +115,7 @@ public class MainActivity extends FragmentActivity implements ReminderService.Re
         }
 
         String deviceID = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
-        Intent rabbitMQService = new Intent(getBaseContext(), RabbitMQManager.class);
+        rabbitMQService = new Intent(getBaseContext(), RabbitMQManager.class);
         rabbitMQService.putExtra("device_id", deviceID);
         startService(rabbitMQService);
 
@@ -179,6 +190,7 @@ public class MainActivity extends FragmentActivity implements ReminderService.Re
     @Override
     protected void onDestroy() {
         stopService(locationServiceIntent);
+        stopService(rabbitMQService);
         super.onDestroy();
     }
 

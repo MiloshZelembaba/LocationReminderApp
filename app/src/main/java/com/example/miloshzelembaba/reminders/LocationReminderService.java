@@ -45,10 +45,11 @@ import static android.app.NotificationManager.IMPORTANCE_MIN;
  * <p>
  * helper methods.
  */
-public class LocationReminderService extends Service implements ReminderService.RemindersListener, LifecycleObserver {
+public class LocationReminderService extends Service implements ReminderService.RemindersListener, LifecycleObserver{
     CurrentLocationManager currentLocationManager = CurrentLocationManager.getInstance();
     ArrayList<Reminder> currentReminders = new ArrayList<>();
     private boolean background = false;
+    public static boolean manualDelete = false;
 
     public LocationReminderService() {
         super();
@@ -71,6 +72,10 @@ public class LocationReminderService extends Service implements ReminderService.
             checkIfUserInReminder(new LatLng(location.getLatitude(), location.getLongitude()));
         }
     };
+
+//    void onLocationChanged(Location var1) {
+//
+//    }
 
     class MyLocation {
         LocationManager lm;
@@ -147,8 +152,9 @@ public class LocationReminderService extends Service implements ReminderService.
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.w("MyIntentService", "onStartCommand callback called");
+        manualDelete = false;
         if (intent != null) {
-            background = intent.getBooleanExtra("background", false);
+            background = intent.getBooleanExtra("background", background);
         }
         startService();
         return START_STICKY;
@@ -221,7 +227,6 @@ public class LocationReminderService extends Service implements ReminderService.
             NotificationChannel mChannel = new NotificationChannel(CHANNEL_ID, name, importance);
             mChannel.setDescription(Description);
             mChannel.enableLights(false);
-            mChannel.setLightColor(Color.RED);
             mChannel.enableVibration(false);
             mChannel.setImportance(IMPORTANCE_MIN);
             mChannel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
@@ -230,8 +235,13 @@ public class LocationReminderService extends Service implements ReminderService.
             notificationManager.createNotificationChannel(mChannel);
         }
 
+        Intent snoozeIntent = new Intent(this, StopLocationServiceReceiver.class);
+        snoozeIntent.putExtra("kill", true);
+        PendingIntent snoozePendingIntent =
+                PendingIntent.getBroadcast(this, 0, snoozeIntent, 0);
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.mipmap.ic_launcher).addAction(new NotificationCompat.Action(R.mipmap.baseline_close_black_18dp, "Stop", snoozePendingIntent))
                 .setPriority(IMPORTANCE_MIN);
 
         Intent resultIntent = new Intent(this, LocationReminderService.class);
@@ -248,24 +258,16 @@ public class LocationReminderService extends Service implements ReminderService.
     @Override
     public void onDestroy() {
         Log.w("MyIntentService", "onDestroy callback called");
-        Intent broadcastIntent = new Intent(this, LocationServiceReceiver.class);
-
-        sendBroadcast(broadcastIntent);
+        if (!manualDelete) {
+            Intent broadcastIntent = new Intent(this, LocationServiceReceiver.class);
+            sendBroadcast(broadcastIntent);
+        }
+        manualDelete = false;
         super.onDestroy();
     }
 
     @Override
     public void onTaskRemoved(Intent rootIntent){
-//        Intent restartServiceIntent = new Intent(getBaseContext(), this.getClass());
-//        restartServiceIntent.setPackage(getPackageName());
-//
-//        PendingIntent restartServicePendingIntent = PendingIntent.getService(getBaseContext(), 1, restartServiceIntent, PendingIntent.FLAG_ONE_SHOT);
-//        AlarmManager alarmService = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
-//        alarmService.set(
-//                AlarmManager.ELAPSED_REALTIME,
-//                SystemClock.elapsedRealtime() + 1000,
-//                restartServicePendingIntent);
-
         super.onTaskRemoved(rootIntent);
     }
 }

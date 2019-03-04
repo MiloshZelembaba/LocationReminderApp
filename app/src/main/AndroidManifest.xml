@@ -51,6 +51,12 @@
             android:exported="true"
             android:label="RestartServiceWhenStopped" />
 
+        <receiver
+            android:name=".StopLocationServiceReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:label="StopLocation" />
+
         <service android:name=".Services.FirebaseService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />

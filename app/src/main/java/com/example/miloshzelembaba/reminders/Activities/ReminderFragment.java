@@ -92,7 +92,7 @@ public class ReminderFragment extends Fragment implements ReminderService.Remind
             title.setText(reminder.getTitle());
             if (reminder.getReminderType().equals("location")) {
                 icon = getResources().getDrawable(R.mipmap.baseline_location_on_white_24dp);
-                title.setText("");
+                time.setText("");
                 date.setText("");
             } else {
                 icon = getResources().getDrawable(R.mipmap.baseline_access_time_white_24dp);
@@ -107,13 +107,6 @@ public class ReminderFragment extends Fragment implements ReminderService.Remind
                 @Override
                 public void onClick(View v) {
                     updateReminder(reminder);
-                }
-            });
-            convertView.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    dbService.deleteReminder(reminder);
-                    return true;
                 }
             });
 
